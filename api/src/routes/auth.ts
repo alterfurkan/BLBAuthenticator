@@ -44,56 +44,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(401).send({ error: 'E-posta veya şifre hatalı' });
     }
 
-    if (user.totp_enabled) {
-      const pendingToken = app.jwt.sign(
-        { sub: user.id, email: user.email, pending2fa: true },
-        { expiresIn: '5m' },
-      );
-      return reply.send({
-        requires2fa: true,
-        pendingToken,
-        user: { id: user.id, email: user.email },
-      });
-    }
-
     const token = app.jwt.sign({ sub: user.id, email: user.email }, { expiresIn: '7d' });
     return reply.send({
       token,
       user: { id: user.id, email: user.email },
-    });
-  });
-
-  app.post('/api/auth/verify-2fa', async (request, reply) => {
-    const schema = z.object({
-      pendingToken: z.string(),
-      code: z.string().length(6),
-    });
-    const body = schema.safeParse(request.body);
-    if (!body.success) {
-      return reply.status(400).send({ error: 'Geçersiz doğrulama kodu' });
-    }
-
-    let payload: { sub: number; email: string; pending2fa?: boolean };
-    try {
-      payload = app.jwt.verify(body.data.pendingToken) as typeof payload;
-    } catch {
-      return reply.status(401).send({ error: 'Doğrulama oturumu süresi doldu, tekrar giriş yapın' });
-    }
-
-    if (!payload.pending2fa) {
-      return reply.status(400).send({ error: 'Geçersiz oturum' });
-    }
-
-    const { verifyUserTotp } = await import('../services/user.js');
-    const valid = await verifyUserTotp(payload.sub, body.data.code);
-    if (!valid) {
-      return reply.status(401).send({ error: 'Doğrulama kodu hatalı' });
-    }
-
-    const token = app.jwt.sign({ sub: payload.sub, email: payload.email }, { expiresIn: '7d' });
-    return reply.send({
-      token,
-      user: { id: payload.sub, email: payload.email },
     });
   });
 
@@ -110,7 +64,6 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         user: {
           id: user.id,
           email: user.email,
-          totpEnabled: user.totp_enabled === 1,
         },
       });
     },
@@ -127,14 +80,14 @@ async function authenticate(request: FastifyRequest, reply: FastifyReply): Promi
 
 declare module '@fastify/jwt' {
   interface FastifyJWT {
-    payload: { sub: number; email: string; pending2fa?: boolean };
-    user: { sub: number; email: string; pending2fa?: boolean };
+    payload: { sub: number; email: string };
+    user: { sub: number; email: string };
   }
 }
 
 declare module 'fastify' {
   interface FastifyRequest {
-    user: { sub: number; email: string; pending2fa?: boolean };
+    user: { sub: number; email: string };
   }
 }
 

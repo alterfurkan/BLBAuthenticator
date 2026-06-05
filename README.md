@@ -1,6 +1,6 @@
 # BLB Authenticator
 
-Google Authenticator benzeri web tabanlı iki faktörlü kimlik doğrulama (2FA / TOTP) uygulaması.
+Google Authenticator benzeri web tabanlı TOTP kasası — birden fazla servis (GitHub, Gmail, vb.) için 2FA kodlarını tek yerde saklayın ve web üzerinden görüntüleyin. Kayıt/giriş yalnızca kasanıza erişmek içindir.
 
 Monorepo yapısı: **React (Vite)** frontend + **Node.js (Fastify)** API + **MySQL**.
 
@@ -93,22 +93,21 @@ npm run dev:web
 - Web: http://localhost:5173  
 - API health: http://localhost:3000/api/health  
 
-Tablolar API ilk açılışta otomatik oluşturulur (`migrate`).
+Tablolar API ilk açılışta otomatik oluşturulur (`users`, `totp_entries`). Docker MySQL port çakışması varsa `docker-compose.yml` içinde `3307:3306` ve `api/.env` → `DB_PORT=3307`.
 
 ## API uç noktaları
 
 | Method | Endpoint | Açıklama |
 |--------|----------|----------|
 | GET | `/api/health` | Sağlık kontrolü |
-| POST | `/api/auth/register` | Kayıt |
-| POST | `/api/auth/login` | Giriş (2FA varsa `pendingToken`) |
-| POST | `/api/auth/verify-2fa` | Login 2FA doğrulama |
-| GET | `/api/auth/me` | Oturum bilgisi (Bearer token) |
-| GET | `/api/2fa/status` | 2FA durumu |
-| POST | `/api/2fa/setup` | Secret + QR oluştur |
-| POST | `/api/2fa/confirm` | 2FA etkinleştir |
-| GET | `/api/2fa/code` | Anlık TOTP kodu |
-| POST | `/api/2fa/disable` | 2FA kapat |
+| POST | `/api/auth/register` | Vault hesabı oluştur |
+| POST | `/api/auth/login` | Giriş (JWT) |
+| GET | `/api/auth/me` | Oturum bilgisi |
+| GET | `/api/entries` | TOTP kayıt listesi |
+| GET | `/api/entries/codes` | Tüm kayıtlar + anlık kodlar |
+| POST | `/api/entries/generate` | Yeni secret + QR önizleme |
+| POST | `/api/entries` | Kayıt ekle (secret + doğrulama kodu) |
+| DELETE | `/api/entries/:id` | Kayıt sil |
 
 ## Docker ile yerel çalıştırma
 

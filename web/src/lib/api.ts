@@ -31,7 +31,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new ApiError(data.error || 'Bir hata oluştu', response.status, data.details);
+    throw new ApiError(
+      (data as { error?: string }).error || (data as { message?: string }).message || 'Bir hata oluştu',
+      response.status,
+      (data as { details?: unknown }).details,
+    );
   }
 
   return data as T;
@@ -40,14 +44,23 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 export interface User {
   id: number;
   email: string;
-  totpEnabled?: boolean;
 }
 
 export interface AuthResponse {
   token: string;
   user: User;
-  requires2fa?: boolean;
-  pendingToken?: string;
+}
+
+export interface TotpEntry {
+  id: number;
+  label: string;
+  issuer: string;
+  createdAt: string;
+}
+
+export interface TotpEntryWithCode extends TotpEntry {
+  code: string;
+  remaining: number;
 }
 
 export const api = {
@@ -65,32 +78,28 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
 
-  verify2fa: (pendingToken: string, code: string) =>
-    request<AuthResponse>('/api/auth/verify-2fa', {
+  me: () => request<{ user: User }>('/api/auth/me'),
+
+  listEntries: () => request<{ entries: TotpEntry[] }>('/api/entries'),
+
+  listEntriesWithCodes: () =>
+    request<{ entries: TotpEntryWithCode[]; remaining: number }>('/api/entries/codes'),
+
+  generateEntry: (label: string, issuer: string) =>
+    request<{ secret: string; otpauthUri: string; qrCodeDataUrl: string }>('/api/entries/generate', {
       method: 'POST',
-      body: JSON.stringify({ pendingToken, code }),
+      body: JSON.stringify({ label, issuer }),
     }),
 
-  me: () => request<{ user: User & { totpEnabled: boolean } }>('/api/auth/me'),
-
-  setup2fa: () =>
-    request<{ secret: string; otpauthUri: string; qrCodeDataUrl: string }>('/api/2fa/setup', {
+  createEntry: (label: string, issuer: string, secret: string, code: string) =>
+    request<{ entry: TotpEntry }>('/api/entries', {
       method: 'POST',
+      body: JSON.stringify({ label, issuer, secret, code }),
     }),
 
-  confirm2fa: (code: string) =>
-    request<{ success: boolean; message: string }>('/api/2fa/confirm', {
-      method: 'POST',
-      body: JSON.stringify({ code }),
-    }),
-
-  get2faStatus: () => request<{ enabled: boolean; email: string }>('/api/2fa/status'),
-
-  getCurrentCode: () => request<{ code: string; remaining: number }>('/api/2fa/code'),
-
-  disable2fa: (code: string) =>
-    request<{ success: boolean; message: string }>('/api/2fa/disable', {
-      method: 'POST',
-      body: JSON.stringify({ code }),
+  deleteEntry: (id: number) =>
+    request<{ success: boolean }>(`/api/entries/${id}`, {
+      method: 'DELETE',
+      body: JSON.stringify({}),
     }),
 };

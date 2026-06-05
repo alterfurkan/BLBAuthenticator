@@ -4,7 +4,7 @@ import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
-import Setup2faPage from './pages/Setup2faPage';
+import AddEntryPage from './pages/AddEntryPage';
 import './App.css';
 
 function App() {
@@ -19,7 +19,7 @@ function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/setup-2fa" element={<Setup2faPage />} />
+            <Route path="/entries/add" element={<AddEntryPage />} />
           </Route>
 
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

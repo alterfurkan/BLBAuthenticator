@@ -5,7 +5,7 @@ import { config, corsOrigins } from './config/env.js';
 import { migrate } from './db/migrate.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
-import { twoFaRoutes } from './routes/twoFa.js';
+import { entriesRoutes } from './routes/entries.js';
 
 async function buildApp() {
   const app = Fastify({
@@ -23,7 +23,7 @@ async function buildApp() {
 
   await app.register(healthRoutes);
   await app.register(authRoutes);
-  await app.register(twoFaRoutes);
+  await app.register(entriesRoutes);
 
   return app;
 }

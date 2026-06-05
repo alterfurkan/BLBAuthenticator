@@ -9,7 +9,7 @@ services:
       MYSQL_USER: blb_auth
       MYSQL_PASSWORD: blb_auth_secret
     ports:
-      - '3306:3306'
+      - '3307:3306'
     volumes:
       - blb_mysql_data:/var/lib/mysql
     healthcheck:

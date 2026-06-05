@@ -11,12 +11,16 @@ export async function verifyTotpToken(secret: string, token: string): Promise<bo
   return result.valid;
 }
 
-export function generateTotpUri(secret: string, email: string): string {
+export function generateTotpUri(secret: string, label: string, issuer: string): string {
   return generateURI({
-    issuer: config.APP_NAME,
-    label: email,
+    issuer: issuer.trim() || config.APP_NAME,
+    label: label.trim(),
     secret,
   });
+}
+
+export function getRemainingSeconds(): number {
+  return 30 - (Math.floor(Date.now() / 1000) % 30);
 }
 
 export async function generateQrCodeDataUrl(otpauthUri: string): Promise<string> {
