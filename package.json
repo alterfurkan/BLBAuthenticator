@@ -1,0 +1,24 @@
+{
+  "name": "blb-authenticator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Google Authenticator benzeri web 2FA uygulaması — React + Node.js monorepo",
+  "workspaces": [
+    "api",
+    "web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev -w api",
+    "dev:web": "npm run dev -w web",
+    "build": "npm run build --workspaces --if-present",
+    "build:api": "npm run build -w api",
+    "build:web": "npm run build -w web",
+    "start:api": "npm run start -w api",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

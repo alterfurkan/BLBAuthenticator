@@ -1,0 +1,61 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: blb-auth-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: blb_authenticator
+      MYSQL_USER: blb_auth
+      MYSQL_PASSWORD: blb_auth_secret
+    ports:
+      - '3306:3306'
+    volumes:
+      - blb_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-ublb_auth', '-pblb_auth_secret']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: blb-auth-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      JWT_SECRET: change-me-to-a-long-random-secret-min-32-chars-dev
+      ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: blb_auth
+      DB_PASSWORD: blb_auth_secret
+      DB_NAME: blb_authenticator
+      CORS_ORIGIN: http://localhost:4173,http://localhost:5173
+      APP_NAME: BLB Authenticator
+    ports:
+      - '3000:3000'
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3000
+    container_name: blb-auth-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - '8080:80'
+
+volumes:
+  blb_mysql_data:
